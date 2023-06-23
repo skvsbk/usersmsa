@@ -1,6 +1,10 @@
 import json
+from uuid import uuid4
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.forms import model_to_dict
+from kafka import KafkaProducer, KafkaConsumer
 # from rest_framework import generics
 # from django.shortcuts import render
 from rest_framework.response import Response
@@ -8,7 +12,8 @@ from rest_framework.views import APIView
 from .serializers import UserSerializer
 
 
-
+producer = KafkaProducer(bootstrap_servers=f'{settings.BROKER_ADDRESS}:{settings.BROKER_PORT}',
+                         value_serializer=lambda m: json.dumps(m).encode('ascii'))
 
 
 
@@ -33,22 +38,78 @@ class UserView(APIView):
 #2
 class PostsListView(APIView):
     def get(self, request):
-        return Response(json.loads(json.dumps([{"id": 1, "userid": 1, "title": "test", "body": "test body"}])))
+        sent_key = uuid4().hex
+        producer.send(topic=settings.KAFKA_TOPIC_PRODUCER,
+                      value={'name': 'get_posts_list'},
+                      key=sent_key.encode())
+        consumer1 = KafkaConsumer(settings.KAFKA_TOPIC_CONSUMER,
+                                  bootstrap_servers=f'{settings.BROKER_ADDRESS}:{settings.BROKER_PORT}',
+                                  # request_timeout_ms=12000,
+                                  max_poll_interval_ms=2000,
+                                  auto_offset_reset='earliest',
+                                  enable_auto_commit=False, group_id='content_grp')
+        result = {'detail': 'Failed request'}
+        for message in consumer1:
+            message_key = message.key.decode('utf-8')
+            print('sent_key =', sent_key, '   ', 'message_key =', message_key)
+            if message_key == sent_key:
+                result = message.value.decode('utf-8')
+                print(message.value, result)
+                consumer1.commit()
+                consumer1.close()
 
+        return Response(json.loads(result))
 #3
 class PostsAuthorListView(APIView):
     def get(self, request, user_id):
+        sent_key = uuid4().hex
+        producer.send(topic=settings.KAFKA_TOPIC_PRODUCER,
+                      value={'name': 'get_authors_id_posts_list', 'user_id': user_id, 'method': 'get'},
+                      key=sent_key.encode())
 
-        return Response({"user": {"id": user_id, "name": "Leanne Graham"},
-                         "posts": [{"id": 1, "title": "111111", "body": "bbb11111"},
-                                   {"id": 2, "title": "2222222", "body": "bbb2222222"}]})
+        consumer1 = KafkaConsumer(settings.KAFKA_TOPIC_CONSUMER,
+                                  bootstrap_servers=f'{settings.BROKER_ADDRESS}:{settings.BROKER_PORT}',
+                                  # request_timeout_ms=12000,
+                                  max_poll_interval_ms=2000,
+                                  auto_offset_reset='earliest',
+                                  enable_auto_commit=False, group_id='content_grp')
+        result = {'detail': 'Failed request'}
+        for message in consumer1:
+            message_key = message.key.decode('utf-8')
+            print('sent_key =', sent_key, '   ', 'message_key =', message_key)
+            if message_key == sent_key:
+                result = message.value.decode('utf-8')
+                print(message.value, result)
+                consumer1.commit()
+                consumer1.close()
+
+        return Response(json.loads(result))
 
 #4
 class PostAuthorView(APIView):
     def get(self, request, post_id):
+        sent_key = uuid4().hex
+        producer.send(topic=settings.KAFKA_TOPIC_PRODUCER,
+                      value={'name': 'get_posts_id', 'post_id': post_id, 'method': 'get'},
+                      key=sent_key.encode())
 
-        return Response({"user": {"id": 1, "name": "Leanne Graham"},
-                         "post": {"id": post_id, "title": "111111", "body": "bbb11111"}})
+        consumer1 = KafkaConsumer(settings.KAFKA_TOPIC_CONSUMER,
+                                  bootstrap_servers=f'{settings.BROKER_ADDRESS}:{settings.BROKER_PORT}',
+                                  # request_timeout_ms=12000,
+                                  max_poll_interval_ms=2000,
+                                  auto_offset_reset='earliest',
+                                  enable_auto_commit=False, group_id='content_grp')
+        result = {'detail': 'Failed request'}
+        for message in consumer1:
+            message_key = message.key.decode('utf-8')
+            print('sent_key =', sent_key, '   ', 'message_key =', message_key)
+            if message_key == sent_key:
+                result = message.value.decode('utf-8')
+                print(message.value, result)
+                consumer1.commit()
+                consumer1.close()
+
+        return Response(json.loads(result))
 
     def post(self, request, user_id):
         pass
