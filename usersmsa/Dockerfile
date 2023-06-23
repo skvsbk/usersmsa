@@ -1,0 +1,25 @@
+# Pull base image
+FROM python:3.10
+
+# Set environment variables
+ENV PIP_DISABLE_PIP_VERSION_CHECK 1
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Set work directory
+WORKDIR /app
+
+# Install dependencies
+COPY ./requirements.txt .
+RUN pip install -r requirements.txt --no-cache-dir
+
+# Copy project
+COPY . .
+
+# Port mapping for web
+EXPOSE 8000
+# Port mapping for kafka
+EXPOSE 9092
+
+# Run project
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
