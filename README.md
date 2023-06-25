@@ -4,7 +4,7 @@
 
 3. Create a database in terminal
 ``` bash
-$mysql -u root -p -h 192.168.2.42 -P3306
+$ mysql -u root -p -h 192.168.2.42 -P3306
 
 mysql> CREATE DATABASE uit_msa;
 
@@ -14,15 +14,15 @@ mysql> exit;
 4. In the terminal from the usersmsa directory, run the docker application (or just run script run.sh)
 
 ``` bash
-$docker build -t usersmsa_img .
+$ ocker build -t usersmsa_img .
 
-$docker run --rm --name usersmsa -p 8200:8000 -it usersmsa_img
+$ docker run --rm --name usersmsa -p 8200:8000 -it usersmsa_img
 ``` 
 
 5. Create application database and superuser inside the container
 
 ``` bash
-$docker exec -it usermsa bash
+$ docker exec -it usermsa bash
 
 root@131f47d9d234:/app$ python manage.py migrate
 
@@ -34,9 +34,9 @@ root@131f47d9d234:/app$ exit
 6. In the terminal from the uit_contentmsa directory, run the docker application (or just run script run.sh)
    
 ``` bash
-$docker build -t contentmsa_img .
+$ docker build -t contentmsa_img .
 
-$docker run -d --rm --network host --name contentmsa -it contentmsa_img
+$ docker run -d --rm --network host --name contentmsa -it contentmsa_img
 ```
 
 7. Fill the database with posts from [https://jsonplaceholder.typicode.com/posts](https://jsonplaceholder.typicode.com/posts) and with authors [https://jsonplaceholder.typicode.com/users](https://jsonplaceholder.typicode.com/users) by script filldb.py (make sure you enter the correct address and port). Filling the database will take place through microservices.
