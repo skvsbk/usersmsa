@@ -1,4 +1,4 @@
-1. Clone both microservices (this apigateway and [contentsmsa](https://github.com/skvsbk/contentsmsa.git)) to run docker.
+1. Clone both microservices (this usersmsa and [contentsmsa](https://github.com/skvsbk/contentsmsa.git)) to run docker.
 
 2. Run docker compose to run mysql server, kafka broker and zookeeper. Make sure you you enter the correct address and port for KAFKA_ADVERTISED_LISTENERS in docker-compose.yml. Also please check django.env for use correct addresses and ports. 
 
