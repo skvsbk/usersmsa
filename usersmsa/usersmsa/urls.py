@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.contrib.auth import get_user_model
-from django.urls import path
+from django.urls import path, re_path
 
 from uit_users.views import UserView, PostsListView, PostsAuthorListView, PostsWithAuthorsListView, PostAuthorView
 
