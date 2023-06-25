@@ -11,7 +11,7 @@ mysql> CREATE DATABASE uit_msa;
 mysql> exit;
 ```
 
-4. In the terminal from the usersmsa directory, run the docker application (or just run script run.sh)
+4. In the terminal from the usersmsa directory, run the docker application (or just run script ___run.sh___)
 
 ``` bash
 $ ocker build -t usersmsa_img .
@@ -31,7 +31,7 @@ root@131f47d9d234:/app$ python manage.py createsuperuser
 root@131f47d9d234:/app$ exit
 ```
 
-6. In the terminal from the uit_contentmsa directory, run the docker application (or just run script run.sh)
+6. In the terminal from the uit_contentmsa directory, run the docker application (or just run script ___run.sh___)
    
 ``` bash
 $ docker build -t contentmsa_img .
