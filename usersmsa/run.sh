@@ -1,5 +1,5 @@
-!#/bin/bash
+#!/bin/bash
 
 # (!) Before checking if the containers with the database and kafka are running
 
-docker build -t uit_apigateway_img . && docker run --name uit_apigateway -it -p 8200:8000  uit_apigateway_img
+docker build -t usersmsa_img . && docker run --rm --name usersmsa -p 8200:8000 -it usersmsa_img

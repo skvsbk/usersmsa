@@ -16,10 +16,5 @@ RUN pip install -r requirements.txt --no-cache-dir
 # Copy project
 COPY . .
 
-# Port mapping for web
-EXPOSE 8000
-# Port mapping for kafka
-EXPOSE 9092
-
 # Run project
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
