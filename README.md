@@ -42,7 +42,7 @@ $ docker run -d --rm --network host --name contentmsa -it contentmsa_img
 7. Fill the database with posts from [https://jsonplaceholder.typicode.com/posts](https://jsonplaceholder.typicode.com/posts) and with authors [https://jsonplaceholder.typicode.com/users](https://jsonplaceholder.typicode.com/users) by script filldb.py (make sure you enter the correct address and port). Filling the database will take place through microservices.
 
 8. Project block diagram
-![ ](https://drive.google.com/file/d/184T_aIoScqnAVIS1Al9D_08PrFFGwbpS/view?usp=sharing)
+![ ](/project.png)
 
 9. Open in browser:
     - [http://127.0.0.1:8200/admin](http://127.0.0.1:8200/admin) to login in admin panel
