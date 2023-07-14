@@ -72,9 +72,7 @@ class PostsListView(APIView, KafkaMixin):
         """
 
         :param request: {
-                            "userid": 1,
-                            "title": "test_3 for create post",
-                            "body": "tes_3 body"
+                            ;
                         }
         :return: json
         """

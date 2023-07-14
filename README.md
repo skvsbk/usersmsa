@@ -14,7 +14,7 @@ mysql> exit;
 4. In the terminal from the usersmsa directory, run the docker application (or just run script ___run.sh___)
 
 ``` bash
-$ ocker build -t usersmsa_img .
+$ docker build -t usersmsa_img .
 
 $ docker run --rm --name usersmsa -p 8200:8000 -it usersmsa_img
 ``` 

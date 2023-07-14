@@ -36,7 +36,7 @@ class UserPostsSerializer:
             "id": self.users["id"],
             "username": self.users["username"],
             "email": self.users["email"],
-            "userifirst_named": self.users["first_name"],
+            "first_name": self.users["first_name"],
             "last_name": self.users["last_name"],
             "posts": self.posts
         }
