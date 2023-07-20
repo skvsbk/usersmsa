@@ -33,7 +33,7 @@ services:
     container_name: kafdrop_ui
     restart: "no"
     ports:
-      - "9000:9000"
+      - 9000:9000
     environment:
       KAFKA_BROKERCONNECT: "broker:29092"
       JVM_OPTS: "-Xms16M -Xmx48M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
