@@ -1,154 +1,66 @@
-import json
-from uuid import uuid4
-
-from django.conf import settings
-from django.contrib.auth import get_user_model
-from django.forms import model_to_dict
-from kafka import KafkaProducer, KafkaConsumer
-# from rest_framework import generics
-# from django.shortcuts import render
+from django.contrib.auth import get_user_model, logout
+from django.core.exceptions import ObjectDoesNotExist
+from rest_framework.authtoken.models import Token
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import UserSerializer, UserPostsSerializer, UserPostsListSerializer
-
-
-class KafkaMixin:
-    def kafka_exchange(self, value):
-        sent_key = uuid4().hex
-        producer = KafkaProducer(bootstrap_servers=f'{settings.BROKER_ADDRESS}:{settings.BROKER_PORT}',
-                                 value_serializer=lambda m: json.dumps(m).encode('ascii'))
-
-        producer.send(topic=settings.KAFKA_TOPIC_PRODUCER,
-                      value=value,
-                      key=sent_key.encode())
-        consumer = KafkaConsumer(settings.KAFKA_TOPIC_CONSUMER,
-                                 bootstrap_servers=f'{settings.BROKER_ADDRESS}:{settings.BROKER_PORT}',
-                                 max_poll_interval_ms=2000,
-                                 auto_offset_reset='earliest',
-                                 enable_auto_commit=False, group_id='content_grp')
-        result = {'details': 'Failed request'}
-        for message in consumer:
-            message_key = message.key.decode('utf-8')
-            print('sent_key =', sent_key, '   ', 'message_key =', message_key)
-            if message_key == sent_key:
-                result = message.value.decode('utf-8')
-                print(message.value, result)
-                consumer.commit()
-                consumer.close()
-        return result
+from rest_framework import permissions, status
+from .serializers import UserSerializer, UserRegisterSerializer
+from .validations import validation_error
+from django.contrib.auth.models import User
 
 
 # 1
 class UserView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    authentication_classes = (TokenAuthentication,)
+
     def get(self, request):
         model = get_user_model()
         queryset = model.objects.all()
-        return Response(UserSerializer(queryset, many=True).data)
+        serializer = UserSerializer(queryset, many=True)
+        return Response({'users': serializer.data}, status=status.HTTP_200_OK)
 
     def post(self, request):
-        model = get_user_model()
-        user_new = model.objects.create(
-            username=request.data['username'],
-            email=request.data['email'],
-            first_name=request.data['first_name'],
-            last_name=request.data['last_name'],
 
-        )
-        return Response(model_to_dict(user_new, exclude=['password', 'last_login', 'is_superuser', 'is_staff',
-                                                         'is_active', 'date_joined', 'groups', 'user_permissions']))
+        errors = validation_error(request.data)
+        if errors is not None:
+            return Response({'detail': errors}, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, ):
+        serializer = UserRegisterSerializer(data=request.data)
+
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            user = User.objects.get_by_natural_key(request.data['username'])
+            token = Token.objects.create(user=user)
+            response_serializer = UserSerializer(instance=user)
+            return Response({"token": token.key, "user": response_serializer.data},
+                            status=status.HTTP_201_CREATED)
+
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request):
         pass
 
 
-# 2
-class PostsListView(APIView, KafkaMixin):
-    def get(self, request):
+class LoginView(APIView):
+    permission_classes = (permissions.AllowAny,)
+    authentication_classes = (TokenAuthentication,)
 
-        result = self.kafka_exchange(value={'name': 'get_posts_list', 'method': 'get'})
-        return Response(json.loads(result))
-    
     def post(self, request):
-        """
-
-        :param request: {
-                            "userid": 1,
-                            "title": "test_3 for create post",
-                            "body": "tes_3 body"
-                        }
-        :return: json
-        """
-
-        result = self.kafka_exchange(value={'name': 'get_posts_list',
-                                            'method': 'post',
-                                            'user_id': request.data['userid'],
-                                            'title': request.data['title'],
-                                            'body': request.data['body']})
-
-        return Response(json.loads(result))
+        user = get_object_or_404(User, username=request.data['username'])
+        if not user.check_password(request.data['password']):
+            return Response({'detail': "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        token, create = Token.objects.get_or_create(user=user)
+        return Response({"token": token.key}, status=status.HTTP_200_OK)
 
 
-# 3
-class PostsAuthorListView(APIView, KafkaMixin):
-    def get(self, request, user_id):
-        result = self.kafka_exchange(value={'name': 'get_authors_id_posts_list',
-                                            'method': 'get',
-                                            'user_id': user_id})
-        # Get user data
-        model = get_user_model()
-        queryset = model.objects.filter(id=user_id)
-        user_data = UserSerializer(queryset, many=True).data
-
-        # Join user data with posts list
-        final_result = UserPostsSerializer(user_data[0], json.loads(result)).data()
-
-        return Response(json.loads(json.dumps(final_result)))
-
-
-# 4
-class PostAuthorView(APIView, KafkaMixin):
-    def get(self, request, post_id):
-        result = self.kafka_exchange(value={'name': 'get_posts_id',
-                                            'method': 'get',
-                                            'post_id': post_id})
-
-        return Response(json.loads(result))
-
-    def put(self, request, post_id):
-        """
-         :param request:   {"title": "test_4 for create post",
-                            "userid": 1,
-                            "body": "tes_4 body"}
-        :param post_id: int
-        :return: json
-        """
-
-        result = self.kafka_exchange(value={'name': 'get_posts_id',
-                                            'method': 'put',
-                                            'id': post_id,
-                                            'user_id': request.data['userid'],
-                                            'title': request.data['title'],
-                                            'body': request.data['body']})
-        return Response(json.loads(result))
-
-    def delete(self, request, post_id):
-        result = self.kafka_exchange(value={'name': 'get_posts_id',
-                                            'method': 'delete',
-                                            'post_id': post_id})
-        return Response(json.loads(result))
-
-
-# 5
-class PostsWithAuthorsListView(APIView, KafkaMixin):
-    def get(self, request):
-        result = self.kafka_exchange(value={'name': 'get_posts_with_authors_list',
-                                            'method': 'get'})
-        # Get user data
-        model = get_user_model()
-        queryset = model.objects.all().order_by("id")
-        user_data = UserSerializer(queryset, many=True).data
-
-        # Join users data with posts list
-        final_result = UserPostsListSerializer(user_data, json.loads(result)).data()
-
-        return Response(json.loads(json.dumps(final_result)))
+class LogoutView(APIView):
+    def post(self, request):
+        try:
+            request.user.auth_token.delete()
+        except (AttributeError, ObjectDoesNotExist):
+            pass
+        logout(request)
+        return Response(status=status.HTTP_200_OK)

@@ -44,7 +44,20 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSIO_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ]
+}
+
+USERNAME_FIELD = 'username'
+REQUIRED_FIELDS = ['username']
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -141,3 +154,4 @@ BROKER_ADDRESS = env('BROKER_ADDRESS')
 BROKER_PORT = env('BROKER_PORT')
 KAFKA_TOPIC_PRODUCER = env('KAFKA_TOPIC_PRODUCER')
 KAFKA_TOPIC_CONSUMER = env('KAFKA_TOPIC_CONSUMER')
+KAFKA_GROUP_ID = env('KAFKA_GROUP_ID')
