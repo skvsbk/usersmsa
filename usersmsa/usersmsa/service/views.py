@@ -1,12 +1,14 @@
 import json
 from uuid import uuid4
 
+from rest_framework import permissions, status
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from kafka import KafkaConsumer
 
-from serializers import UserSerializer
+from uit_users.serializers import UserSerializer
 from .. import settings
 from . import publisher_posts_list, publisher_post_author, publisher_posts_with_author_list, publisher_posts_author_list
 from .transmitters import KafkaError
@@ -48,20 +50,21 @@ class KafkaConsumerMixin:
 
 # 2
 class PostsListView(APIView, KafkaConsumerMixin):
-    """psth: /posts"""
+    """path: /posts"""
+    permission_classes = (permissions.IsAuthenticated,)
+    authentication_classes = (TokenAuthentication,)
 
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
         sent_key = uuid4().hex
         publisher_posts_list.change_state(key=sent_key,
                                           value={'name': 'get_posts_list',
                                                  'method': 'get'})
         if KafkaError().get_error(sent_key):
-            return Response(status=500, data={'detail': 'Internal server error'})
+            return Response(data={'detail': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         result = self.consumer_get_json(sent_key)
 
         return Response(json.loads(result))
-
 
     def post(self, request):
         sent_key = uuid4().hex
@@ -72,7 +75,7 @@ class PostsListView(APIView, KafkaConsumerMixin):
                                                  'title': request.data['title'],
                                                  'body': request.data['body']})
         if KafkaError().get_error(sent_key):
-            return Response(status=500, data={'detail': 'Internal server error'})
+            return Response(data={'detail': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         result = self.consumer_get_json(sent_key)
 
@@ -81,7 +84,10 @@ class PostsListView(APIView, KafkaConsumerMixin):
 
 # 3
 class PostsAuthorListView(APIView, KafkaConsumerMixin):
-    """psth: /authors/<int:user_id>/posts"""
+    """path: /authors/<int:user_id>/posts"""
+    permission_classes = (permissions.IsAuthenticated,)
+    authentication_classes = (TokenAuthentication,)
+
     def get(self, request, user_id):
         # Get user data
         model = get_user_model()
@@ -96,7 +102,7 @@ class PostsAuthorListView(APIView, KafkaConsumerMixin):
                                                         'user_id': user_id,
                                                         'user_data': user_data[0]})
         if KafkaError().get_error(sent_key):
-            return Response(status=500, data={'detail': 'Internal server error'})
+            return Response(data={'detail': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         result = self.consumer_get_json(sent_key)
 
@@ -105,7 +111,10 @@ class PostsAuthorListView(APIView, KafkaConsumerMixin):
 
 # 4
 class PostAuthorView(APIView, KafkaConsumerMixin):
-    """psth: /posts/<int:post_id>"""
+    """path: /posts/<int:post_id>"""
+    permission_classes = (permissions.IsAuthenticated,)
+    authentication_classes = (TokenAuthentication,)
+
     def get(self, request, post_id):
         sent_key = uuid4().hex
         publisher_post_author.change_state(key=sent_key,
@@ -113,7 +122,7 @@ class PostAuthorView(APIView, KafkaConsumerMixin):
                                                   'method': 'get',
                                                   'post_id': post_id})
         if KafkaError().get_error(sent_key):
-            return Response(status=500, data={'detail': 'Internal server error'})
+            return Response(data={'detail': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         result = self.consumer_get_json(sent_key)
 
@@ -121,12 +130,18 @@ class PostAuthorView(APIView, KafkaConsumerMixin):
 
     def put(self, request, post_id):
         """
-         :param request:   {"title": "test_4 for create post",
+         :param request:   {
+                            "title": "test_4 for create post",
                             "userid": 1,
-                            "body": "tes_4 body"}
+                            "body": "tes_4 body"
+                            }
         :param post_id: int
         :return: json
         """
+
+        # Only owner can edit own posts
+        if request.user.id != int(request.data['userid']):
+            return Response({'detail': 'Unable to edit non-own post'}, status=status.HTTP_403_FORBIDDEN)
 
         sent_key = uuid4().hex
         publisher_post_author.change_state(key=sent_key,
@@ -137,20 +152,25 @@ class PostAuthorView(APIView, KafkaConsumerMixin):
                                                   'title': request.data['title'],
                                                   'body': request.data['body']})
         if KafkaError().get_error(sent_key):
-            return Response(status=500, data={'detail': 'Internal server error'})
+            return Response(data={'detail': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         result = self.consumer_get_json(sent_key)
 
         return Response(json.loads(result))
 
     def delete(self, request, post_id):
+
+        # Only owner can delete own posts
+        if request.user.id != int(request.data['userid']):
+            return Response({'detail': 'Unable to delete non-own post'}, status=status.HTTP_403_FORBIDDEN)
+
         sent_key = uuid4().hex
         publisher_post_author.change_state(key=sent_key,
                                            value={'name': 'get_posts_id',
                                                   'method': 'delete',
                                                   'post_id': post_id})
         if KafkaError().get_error(sent_key):
-            return Response(status=500, data={'detail': 'Internal server error'})
+            return Response(data={'detail': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         result = self.consumer_get_json(sent_key)
 
@@ -159,7 +179,9 @@ class PostAuthorView(APIView, KafkaConsumerMixin):
 
 # 5
 class PostsWithAuthorsListView(APIView, KafkaConsumerMixin):
-    """psth: /authors/posts"""
+    """path: /authors/posts"""
+    permission_classes = (permissions.IsAuthenticated,)
+    authentication_classes = (TokenAuthentication,)
 
     def get(self, request):
         # Get user data
@@ -173,7 +195,7 @@ class PostsWithAuthorsListView(APIView, KafkaConsumerMixin):
                                                              'method': 'get',
                                                              'user_data': user_data})
         if KafkaError().get_error(sent_key):
-            return Response(status=500, data={'detail': 'Internal server error'})
+            return Response(data={'detail': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         result = self.consumer_get_json(sent_key)
 

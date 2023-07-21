@@ -28,6 +28,8 @@ root@131f47d9d234:/app$ python manage.py migrate
 
 root@131f47d9d234:/app$ python manage.py createsuperuser
 
+root@131f47d9d234:/app$ python manage.py drf_create_token <your superyouser>
+
 root@131f47d9d234:/app$ exit
 ```
 
@@ -39,7 +41,7 @@ $ docker build -t contentmsa_img .
 $ docker run -d --rm --network host --name contentmsa -it contentmsa_img
 ```
 
-7. Fill the database with posts from [https://jsonplaceholder.typicode.com/posts](https://jsonplaceholder.typicode.com/posts) and with authors [https://jsonplaceholder.typicode.com/users](https://jsonplaceholder.typicode.com/users) by script filldb.py (make sure you enter the correct address and port). Filling the database will take place through microservices.
+7. Fill the database with posts from [https://jsonplaceholder.typicode.com/posts](https://jsonplaceholder.typicode.com/posts) and with authors [https://jsonplaceholder.typicode.com/users](https://jsonplaceholder.typicode.com/users) by script filldb.py (make sure you enter the correct address, port and superuser credentials). Filling the database will take place through microservices.
 
 8. Project block diagram
 ![ ](/project.png)

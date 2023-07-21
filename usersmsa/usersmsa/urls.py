@@ -17,13 +17,15 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
-from uit_users.views import UserView
+from uit_users.views import UserView, LoginView, LogoutView
 from .service.views import PostsListView, PostsAuthorListView, PostsWithAuthorsListView, PostAuthorView
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('users', UserView.as_view()),   # 1
+    path('login', LoginView.as_view()),
+    path('logout', LogoutView.as_view()),
     path('posts', PostsListView.as_view()),  # 2
     path('authors/<int:user_id>/posts', PostsAuthorListView.as_view()),   # 3
     path('posts/<int:post_id>', PostAuthorView.as_view()),   # 4
