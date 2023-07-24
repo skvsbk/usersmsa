@@ -49,8 +49,8 @@ $ docker run -d --rm --network host --name contentmsa -it contentmsa_img
 9. Open in browser:
     - [http://127.0.0.1:8200/admin](http://127.0.0.1:8200/admin) to login in admin panel
     - [http://127.0.0.1:8200/users](http://127.0.0.1:8200/users) to get all users
-    - [http://127.0.0.1:8200/users](http://127.0.0.1:8200/login) do login (POST)
-    - [http://127.0.0.1:8200/users](http://127.0.0.1:8200/logout) do logout (POST)
+    - [http://127.0.0.1:8200/login](http://127.0.0.1:8200/login) do login (POST)
+    - [http://127.0.0.1:8200/logout](http://127.0.0.1:8200/logout) do logout (POST)
     - [http://127.0.0.1:8200/posts](http://127.0.0.1:8200/posts) to get all posts
     - [http://127.0.0.1:8200/posts/1](http://127.0.0.1:8200/posts/1) to get one post with id = 1
     - [http://127.0.0.1:8200/authors/1](http://127.0.0.1:8200/authors/1) to all posts by author with id = 1
